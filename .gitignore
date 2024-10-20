@@ -1,0 +1,8 @@
+/.venv
+/CommodityBackend/__pycache__
+
+/CommodityBackend/migrations
+/CommodityBackend/db.sqlite3
+/CommodityBackend/CommodityApi/migrations
+/CommodityBackend/CommodityApi/__pycache__
+/CommodityBackend/CommodityBackend/__pycache__
