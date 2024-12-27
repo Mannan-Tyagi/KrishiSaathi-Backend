@@ -240,7 +240,7 @@ class Price_Ops:
                 FROM RankedMarkets
                 WHERE price_rank = 1  
                 ORDER BY Max_Price DESC  
-                LIMIT 6;  
+                LIMIT 5;  
             """, (commodity_id,commodity_id,))
             results = cursor.fetchall()
 
