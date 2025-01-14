@@ -49,3 +49,18 @@ class Commodity(models.Model):
     arrival_date = models.DateField()  # Use DateField for storing date
     modal_price = models.DecimalField(max_digits=10, decimal_places=2)  # Adjust max_digits and decimal_places as necessary
     commodity_name = models.CharField(max_length=255)
+
+class CommodityMarketData(models.Model):
+    year_value = models.IntegerField()
+    month_value = models.IntegerField()
+    month_name = models.CharField(max_length=3)
+    avg_min_price = models.DecimalField(max_digits=10, decimal_places=2)
+    avg_max_price = models.DecimalField(max_digits=10, decimal_places=2)
+    avg_modal_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+class SeasonalData(models.Model):
+    season = models.CharField(max_length=10)
+    year_value = models.IntegerField()
+    avg_min_price = models.DecimalField(max_digits=10, decimal_places=2)
+    avg_max_price = models.DecimalField(max_digits=10, decimal_places=2)
+    avg_modal_price = models.DecimalField(max_digits=10, decimal_places=2)

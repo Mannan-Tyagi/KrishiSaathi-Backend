@@ -35,3 +35,12 @@ class CommoditySerializer(serializers.ModelSerializer):
     class Meta:
         model = Commodity
         fields = '__all__'
+class CommodityPriceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommodityMarketData
+        fields = '__all__'
+
+class SeasonalDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SeasonalData
+        fields = '__all__'

@@ -240,7 +240,7 @@ class Price_Ops:
                 FROM RankedMarkets
                 WHERE price_rank = 1  
                 ORDER BY Max_Price DESC  
-                LIMIT 5;  
+                LIMIT 4;  
             """, (commodity_id,commodity_id,))
             results = cursor.fetchall()
 
@@ -310,6 +310,85 @@ class Price_Ops:
             cursor.close()
             connection.close()
 
+    @classmethod
+    def get_commodity_prices(cls, date_range, market_id, commodity_id):
+        connection = DBConnection.database_connection()
+
+        if connection is None:
+            raise Exception("Failed to establish database connection.")
+
+        try:
+            cursor = connection.cursor(dictionary=True)
+            query = """
+            SELECT 
+                YEAR(Combined.Arrival_Date) AS YearValue,
+                MONTH(Combined.Arrival_Date) AS MonthValue,
+                DATE_FORMAT(MIN(Combined.Arrival_Date), '%%b') AS MonthName,
+                AVG(Combined.Min_Price) AS AvgMinPrice,
+                AVG(Combined.Max_Price) AS AvgMaxPrice,
+                AVG(Combined.Modal_Price) AS AvgModalPrice
+            FROM 
+            (
+                SELECT Arrival_Date, Min_Price, Max_Price, Modal_Price, Market_ID, Commodity_ID
+                FROM fact_indiancommoditymarketdata_2025
+                
+                UNION ALL
+                
+                SELECT Arrival_Date, Min_Price, Max_Price, Modal_Price, Market_ID, Commodity_ID
+                FROM fact_indiancommoditymarketdata_2024
+
+                UNION ALL
+                
+                SELECT Arrival_Date, Min_Price, Max_Price, Modal_Price, Market_ID, Commodity_ID
+                FROM fact_indiancommoditymarketdata_2023
+
+                UNION ALL
+                
+                SELECT Arrival_Date, Min_Price, Max_Price, Modal_Price, Market_ID, Commodity_ID
+                FROM fact_indiancommoditymarketdata_2022
+
+                UNION ALL
+                
+                SELECT Arrival_Date, Min_Price, Max_Price, Modal_Price, Market_ID, Commodity_ID
+                FROM fact_indiancommoditymarketdata_2021
+            ) AS Combined
+            WHERE
+            (
+                (%s = '1M' AND Combined.Arrival_Date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+                OR (%s = '3M' AND Combined.Arrival_Date >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH))
+                OR (%s = '6M' AND Combined.Arrival_Date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH))
+                OR (%s = '1Y' AND Combined.Arrival_Date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH))
+                OR (%s = 'All')
+            )
+            AND Combined.Market_ID = %s
+            AND Combined.Commodity_ID = %s
+            GROUP BY 
+                YEAR(Combined.Arrival_Date),
+                MONTH(Combined.Arrival_Date)
+            ORDER BY 
+                YEAR(Combined.Arrival_Date),
+                MONTH(Combined.Arrival_Date)
+            LIMIT 0, 500;
+            """
+            
+            cursor.execute(query, (date_range, date_range, date_range, date_range, date_range, market_id, commodity_id))
+            results = cursor.fetchall()
+            print(f"Results from query: {results}")
+            formatted_results = []
+            for row in results:
+                commodity_instance = CommodityMarketData()
+                commodity_instance.year_value = row['YearValue']
+                commodity_instance.month_value = row['MonthValue']
+                commodity_instance.month_name = row['MonthName']
+                commodity_instance.avg_min_price = row['AvgMinPrice']
+                commodity_instance.avg_max_price = row['AvgMaxPrice']
+                commodity_instance.avg_modal_price = row['AvgModalPrice']
+                formatted_results.append(commodity_instance)
+
+            return formatted_results
+        finally:
+            cursor.close()
+            connection.close()
 class Forecast_Ops:
     @classmethod
     def get_forecasted_price(cls,commodity_id,market_id):
@@ -431,6 +510,83 @@ class Forecast_Ops:
                 CommodityForecast_list.append(CommodityForecast_instance)
 
             return CommodityForecast_list
+        finally:
+            cursor.close()
+            connection.close()
+
+class SeasonalDataOps:
+    @classmethod
+    def get_seasonal_data(cls, market_id, commodity_id):
+        connection = DBConnection.database_connection()
+
+        if connection is None:
+            raise Exception("Failed to establish database connection.")
+
+        try:
+            cursor = connection.cursor(dictionary=True)
+            query = """
+            SELECT 
+                CASE 
+                    WHEN MONTH(Arrival_Date) IN (3, 4, 5) THEN 'Spring'
+                    WHEN MONTH(Arrival_Date) IN (6, 7, 8) THEN 'Summer'
+                    WHEN MONTH(Arrival_Date) IN (9, 10, 11) THEN 'Autumn'
+                    WHEN MONTH(Arrival_Date) IN (12, 1, 2) THEN 'Winter'
+                END AS Season,
+                YEAR(Arrival_Date) AS YearValue,
+                AVG(Min_Price) AS AvgMinPrice,
+                AVG(Max_Price) AS AvgMaxPrice,
+                AVG(Modal_Price) AS AvgModalPrice
+            FROM 
+                (
+                    SELECT Arrival_Date, Min_Price, Max_Price, Modal_Price, Market_ID, Commodity_ID
+                    FROM fact_indiancommoditymarketdata_2025
+
+                    UNION ALL
+
+                    SELECT Arrival_Date, Min_Price, Max_Price, Modal_Price, Market_ID, Commodity_ID
+                    FROM fact_indiancommoditymarketdata_2024
+
+                    UNION ALL
+
+                    SELECT Arrival_Date, Min_Price, Max_Price, Modal_Price, Market_ID, Commodity_ID
+                    FROM fact_indiancommoditymarketdata_2023
+
+                    UNION ALL
+
+                    SELECT Arrival_Date, Min_Price, Max_Price, Modal_Price, Market_ID, Commodity_ID
+                    FROM fact_indiancommoditymarketdata_2022
+
+                    UNION ALL
+
+                    SELECT Arrival_Date, Min_Price, Max_Price, Modal_Price, Market_ID, Commodity_ID
+                    FROM fact_indiancommoditymarketdata_2021
+                ) AS Combined
+            WHERE
+                Combined.Market_ID = %s
+                AND Combined.Commodity_ID = %s
+            GROUP BY 
+                Season, YearValue
+            ORDER BY 
+                FIELD(Season, 'Spring', 'Summer', 'Autumn', 'Winter'),
+                YearValue
+            LIMIT 0, 500;
+            """
+            
+            cursor.execute(query, (market_id, commodity_id))
+            results = cursor.fetchall()
+
+            formatted_results = []
+            for row in results:
+                seasonal_instance = SeasonalData(
+                    season=row['Season'],
+                    year_value=row['YearValue'],
+                    avg_min_price=row['AvgMinPrice'],
+                    avg_max_price=row['AvgMaxPrice'],
+                    avg_modal_price=row['AvgModalPrice']
+                )
+                formatted_results.append(seasonal_instance)
+
+            return formatted_results
         finally:
             cursor.close()
             connection.close()

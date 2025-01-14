@@ -12,4 +12,7 @@ urlpatterns = [
     path('get-commodity-forecast/', GetCommodityForecast.as_view(), name='get_commodity_forecast'),
     path('get-commodity/', GetAllCommoditiesInMarket.as_view(), name='get_commodity'),
     path('get-top6-forecast-price/', GetTop6CommodityForecast.as_view(), name='get_commodity_price'),
+    path('commodity_prices/', CommodityPricesView.as_view(), name='commodity_prices'),
+    path('seasonal-data/', SeasonalDataView.as_view(), name='seasonal-data'),
+
 ]
