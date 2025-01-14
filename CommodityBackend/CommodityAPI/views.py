@@ -149,3 +149,54 @@ class GetTop6CommodityForecast(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class CommodityPricesView(APIView):
+    def post(self, request):
+        try:
+            # Extract the required parameters from the request body
+            date_range = request.data.get('dateRange', 'All')  # Default to 'All' if not provided
+            market_id = request.data.get('market_id')
+            commodity_id = request.data.get('commodity_id')
+
+            # Validation of required parameters
+            if not market_id:
+                return Response({'error': 'Market ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+            if not commodity_id:
+                return Response({'error': 'Commodity ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Fetch commodity prices based on the provided parameters
+            commodity_prices = Price_Ops.get_commodity_prices(date_range, market_id, commodity_id)
+
+            # Serialize the fetched data
+            serializer = CommodityPriceSerializer(commodity_prices, many=True)
+
+            # Return the serialized data as a JSON response
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            # Return a generic error message in case of any exception
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class SeasonalDataView(APIView):
+    def post(self, request):
+        try:
+            # Extract the required parameters
+            market_id = request.data.get('market_id')
+            commodity_id = request.data.get('commodity_id')
+
+            # Validate parameters
+            if not market_id:
+                return Response({'error': 'Market ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+            if not commodity_id:
+                return Response({'error': 'Commodity ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Fetch data
+            seasonal_data = SeasonalDataOps.get_seasonal_data(market_id, commodity_id)
+
+            # Serialize data
+            serializer = SeasonalDataSerializer(seasonal_data, many=True)
+
+            # Return response
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
