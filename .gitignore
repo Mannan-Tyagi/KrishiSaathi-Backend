@@ -6,3 +6,6 @@
 /CommodityBackend/CommodityApi/migrations
 /CommodityBackend/CommodityApi/__pycache__
 /CommodityBackend/CommodityBackend/__pycache__
+CommodityBackend/.env
+.vscode/launch.json
+/.vscode

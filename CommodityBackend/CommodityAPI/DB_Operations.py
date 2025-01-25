@@ -2,6 +2,28 @@ from .models import *  # Import the model class
 from .DB_Connection import DBConnection
 
 class Commodity_Ops:
+        
+    @staticmethod
+    def get_commodities_count():
+        connection = DBConnection.database_connection()
+
+        if connection is None:
+            raise Exception("Failed to establish database connection.")
+
+        try:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("SELECT COUNT(*) AS count FROM commoditydataanaylsis.dim_commoditydetails;")
+            result = cursor.fetchone()  # Use fetchone since you only need one record
+
+            if result:
+                commodity_count_instance = CommodityCount()
+                commodity_count_instance.count = result['count']
+                return [commodity_count_instance]  # Return a list containing the instance
+            else:
+                raise Exception("Failed to fetch count from the database.")
+        finally:
+            cursor.close()
+            connection.close()
 
     @classmethod
     def get_commodity_by_market_id(cls, market_id):
@@ -389,6 +411,7 @@ class Price_Ops:
         finally:
             cursor.close()
             connection.close()
+
 class Forecast_Ops:
     @classmethod
     def get_forecasted_price(cls,commodity_id,market_id):

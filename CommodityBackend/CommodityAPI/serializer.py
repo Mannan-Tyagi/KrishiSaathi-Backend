@@ -44,3 +44,8 @@ class SeasonalDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = SeasonalData
         fields = '__all__'
+
+class CommodityCountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommodityCount
+        fields = '__all__'

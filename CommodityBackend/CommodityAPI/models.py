@@ -64,3 +64,7 @@ class SeasonalData(models.Model):
     avg_min_price = models.DecimalField(max_digits=10, decimal_places=2)
     avg_max_price = models.DecimalField(max_digits=10, decimal_places=2)
     avg_modal_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+class CommodityCount(models.Model):
+    count = models.IntegerField()
+    
