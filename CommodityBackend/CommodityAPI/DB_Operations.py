@@ -69,7 +69,7 @@ class Market_Ops:
 
         try:
             cursor = connection.cursor(dictionary=True)
-            cursor.execute("SELECT DISTINCT market_state FROM commoditydataanaylsis.dim_marketdetails;")
+            cursor.execute("SELECT DISTINCT market_state FROM commoditydataanaylsis.dim_marketdetails order by market_state;")
             results = cursor.fetchall()
 
             MarketStates_list = []
@@ -93,7 +93,7 @@ class Market_Ops:
 
         try:
             cursor = connection.cursor(dictionary=True)
-            cursor.execute("SELECT Distinct market_district FROM commoditydataanaylsis.dim_marketdetails where market_state = %s;", (market_state,))
+            cursor.execute("SELECT Distinct market_district FROM commoditydataanaylsis.dim_marketdetails where market_state = %s order by market_district;", (market_state,))
             results = cursor.fetchall()
 
             MarketDistricts_list = []
@@ -116,7 +116,7 @@ class Market_Ops:
 
         try:
             cursor = connection.cursor(dictionary=True)
-            cursor.execute("SELECT Distinct market_id, market_name FROM commoditydataanaylsis.dim_marketdetails where market_district = %s;", (market_district,))
+            cursor.execute("SELECT Distinct market_id, market_name FROM commoditydataanaylsis.dim_marketdetails where market_district = %s order by market_name;", (market_district,))
             results = cursor.fetchall()
 
             Market_list = []
