@@ -126,8 +126,10 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-CORS_ALLOW_ALL_ORIGINS = True  # Use with caution; consider limiting origins in production
-
+# CORS_ALLOWED_ORIGINS = [
+#     "https://krishisaathi.vercel.app",
+# ]
+CORS_ALLOW_ALL_ORIGINS = True
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

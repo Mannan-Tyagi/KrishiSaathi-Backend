@@ -132,6 +132,55 @@ class Market_Ops:
             cursor.close()
             connection.close()
 
+    @classmethod
+    def get_nearest_market(cls,user_lat,user_lon):
+        connection = DBConnection.database_connection()
+
+        if connection is None:
+            raise Exception("Failed to establish database connection.")
+        
+        try:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT 
+                    market_id, 
+                    market_name, 
+                    market_district,
+                    market_state,
+                    latitude,
+                    longitude,
+                    (
+                        6371 * ACOS(
+                                COS(RADIANS(%s)) 
+                                * COS(RADIANS(latitude)) 
+                                * COS(RADIANS(longitude) - RADIANS(%s)) 
+                                + SIN(RADIANS(%s)) 
+                                * SIN(RADIANS(latitude))
+                            )
+                    ) AS distance
+                FROM dim_marketdetails
+                ORDER BY distance
+                LIMIT 1
+            """, (user_lat, user_lon, user_lat))
+            results = cursor.fetchall()
+
+            NearestMarket_list = []
+
+            for row in results:
+                NearestMarket_instance = NearestMarket()
+                NearestMarket_instance.market_id = row['market_id']
+                NearestMarket_instance.market_name = row['market_name']
+                NearestMarket_instance.market_district = row['market_district']
+                NearestMarket_instance.market_state = row['market_state']
+                NearestMarket_instance.latitude = row['latitude']
+                NearestMarket_instance.longitude = row['longitude']
+                NearestMarket_list.append(NearestMarket_instance)
+
+            return NearestMarket_list
+        finally:
+            cursor.close()
+            connection.close()
+
 class Price_Ops:
     @classmethod
     def get_price_details(cls,commodity_id,market_id):
@@ -297,22 +346,28 @@ class Price_Ops:
         try:
             cursor = connection.cursor(dictionary=True)
             cursor.execute("""
-                SELECT DISTINCT 
-                fimd.commodity_id, 
-                fimd.arrival_date, 
-                fimd.Modal_Price, 
-                c.commodity_name
-            FROM 
-                commoditydataanaylsis.fact_indiancommoditymarketdata_2024 fimd
-            JOIN 
-                commoditydataanaylsis.dim_commoditydetails c ON fimd.commodity_id = c.commodity_id
-            WHERE 
-                fimd.market_id = %s
-                AND fimd.arrival_date = (
-                    SELECT MAX(arrival_date)
-                    FROM commoditydataanaylsis.fact_indiancommoditymarketdata_2024
-                    WHERE market_id = %s
-                );
+                            SELECT 
+                            fimd.commodity_id, 
+                            fimd.arrival_date, 
+                            fimd.Modal_Price, 
+                            c.commodity_name,
+                            c.commodity_grade,
+                            c.commodity_variety
+                        FROM 
+                            commoditydataanaylsis.fact_indiancommoditymarketdata_2024 fimd
+                        JOIN 
+                            commoditydataanaylsis.dim_commoditydetails c 
+                            ON fimd.commodity_id = c.commodity_id
+                        WHERE 
+                            fimd.market_id = %s
+                            AND fimd.arrival_date = (
+                                SELECT MAX(arrival_date)
+                                FROM commoditydataanaylsis.fact_indiancommoditymarketdata_2024
+                                WHERE 
+                                    market_id = %s
+                                    AND commodity_id = fimd.commodity_id  
+                            )
+                            Order By Commodity_Name;
 
             """, (market_id,market_id,))
             results = cursor.fetchall()
@@ -325,6 +380,8 @@ class Price_Ops:
                 commodity_instance.commodity_name = row['commodity_name']
                 commodity_instance.arrival_date = row['arrival_date']
                 commodity_instance.modal_price = row['Modal_Price']
+                commodity_instance.commodity_variety = row['commodity_variety']
+                commodity_instance.commodity_grade = row['commodity_grade']
                 CommodityDetails_list.append(commodity_instance)
         
             return CommodityDetails_list
