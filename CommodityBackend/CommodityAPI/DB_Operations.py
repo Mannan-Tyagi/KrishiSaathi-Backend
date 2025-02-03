@@ -346,28 +346,37 @@ class Price_Ops:
         try:
             cursor = connection.cursor(dictionary=True)
             cursor.execute("""
-                            SELECT 
-                            fimd.commodity_id, 
-                            fimd.arrival_date, 
-                            fimd.Modal_Price, 
-                            c.commodity_name,
-                            c.commodity_grade,
-                            c.commodity_variety
-                        FROM 
-                            commoditydataanaylsis.fact_indiancommoditymarketdata_2024 fimd
-                        JOIN 
-                            commoditydataanaylsis.dim_commoditydetails c 
-                            ON fimd.commodity_id = c.commodity_id
-                        WHERE 
-                            fimd.market_id = %s
-                            AND fimd.arrival_date = (
-                                SELECT MAX(arrival_date)
-                                FROM commoditydataanaylsis.fact_indiancommoditymarketdata_2024
-                                WHERE 
-                                    market_id = %s
-                                    AND commodity_id = fimd.commodity_id  
-                            )
-                            Order By Commodity_Name;
+                            WITH latest_dates AS (
+    SELECT 
+        commodity_id, 
+        MAX(arrival_date) AS max_arrival_date
+    FROM 
+        commoditydataanaylsis.fact_indiancommoditymarketdata_2024
+    WHERE 
+        market_id = %s
+    GROUP BY 
+        commodity_id
+)
+SELECT 
+    fimd.commodity_id, 
+    fimd.arrival_date, 
+    fimd.Modal_Price, 
+    c.commodity_name,
+    c.commodity_grade,
+    c.commodity_variety
+FROM 
+    commoditydataanaylsis.fact_indiancommoditymarketdata_2024 fimd
+JOIN 
+    latest_dates ld
+    ON fimd.commodity_id = ld.commodity_id 
+    AND fimd.arrival_date = ld.max_arrival_date
+JOIN 
+    commoditydataanaylsis.dim_commoditydetails c 
+    ON fimd.commodity_id = c.commodity_id
+WHERE 
+    fimd.market_id = %s
+ORDER BY 
+    c.commodity_name;
 
             """, (market_id,market_id,))
             results = cursor.fetchall()
