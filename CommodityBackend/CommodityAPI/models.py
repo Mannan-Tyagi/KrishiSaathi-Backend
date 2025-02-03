@@ -48,6 +48,8 @@ class Commodity(models.Model):
     commodity_id = models.AutoField(primary_key=True)  # Use AutoField if it is auto-incremented
     arrival_date = models.DateField()  # Use DateField for storing date
     modal_price = models.DecimalField(max_digits=10, decimal_places=2)  # Adjust max_digits and decimal_places as necessary
+    commodity_variety = models.CharField(max_length=255)
+    commodity_grade = models.CharField(max_length=255)
     commodity_name = models.CharField(max_length=255)
 
 class CommodityMarketData(models.Model):
@@ -67,4 +69,11 @@ class SeasonalData(models.Model):
 
 class CommodityCount(models.Model):
     count = models.IntegerField()
-    
+
+class NearestMarket(models.Model):
+    market_id = models.AutoField(primary_key=True)
+    market_name = models.CharField(max_length=255)
+    market_district = models.CharField(max_length=255)
+    market_state = models.CharField(max_length=255)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)

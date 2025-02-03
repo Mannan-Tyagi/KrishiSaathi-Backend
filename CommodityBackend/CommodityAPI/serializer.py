@@ -49,3 +49,8 @@ class CommodityCountSerializer(serializers.ModelSerializer):
     class Meta:
         model = CommodityCount
         fields = '__all__'
+
+class NearestMarketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NearestMarket
+        fields = '__all__'

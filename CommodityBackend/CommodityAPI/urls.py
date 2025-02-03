@@ -15,4 +15,5 @@ urlpatterns = [
     path('commodity_prices/', views.CommodityPricesView.as_view(), name='commodity_prices'),
     path('seasonal-data/', views.SeasonalDataView.as_view(), name='seasonal-data'),
     path('commodities-count/', views.CommoditiesCount.as_view(), name='commodities-count'),
+    path('nearest-market/', views.NearestMarketView.as_view(), name='nearest-market'),
 ]
